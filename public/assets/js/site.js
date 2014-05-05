@@ -7,11 +7,12 @@ $(document).ready(function(){
 	var command_line_queue = [];
 	var command_line_queue_ind = 0;
 
-	var get_el_html = function(type){
+	var get_el_html = function(type, context){
+		context = context ? ' ' + context : '';
 		el_count++;
 		var id = 'el-' + el_count;
 		var html =
-			'<div class="' + type +' inserted line" id="' + id + '">' +
+			'<div class="' + type + context + ' inserted line" id="' + id + '">' +
 				$('.templates .' + type).html() +
 			'</div>';
 		return {
@@ -73,7 +74,7 @@ $(document).ready(function(){
 	socket.on('response', function (data) {
 		console.log(data);
 		$('.templates').append(commandline);
-		var lines = data.trim().split('\n');
+		var lines = data.message.trim().split('\n');
 		_.each(lines, function(value){
 
 			var el, el_data;
@@ -81,7 +82,7 @@ $(document).ready(function(){
 			if ('>>>' === value){
 
 			} else {
-				el_data = get_el_html('output');
+				el_data = get_el_html('output', data.context);
 				queue.append(el_data.html);
 				el = $('#' + el_data.id);
 				$('.data', el).text(value);

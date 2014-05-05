@@ -23,6 +23,9 @@ body {
   position: relative;
   margin: 6px 0;
 }
+#queue .line.stderr {
+  background-color: #ffff00;
+}
 #queue .line .prompt {
   position: absolute;
   top: 0;

@@ -45,13 +45,21 @@ io.sockets.on('connection', function (socket) {
 
 	socket.py.stderr.on('data', function (data) {
 		var r = data.toString();
-		socket.emit('response', r);
+		var o = {
+			context: 'stderr',
+			message: r
+		};
+		socket.emit('response', o);
 		console.log(r);
 	});
 
 	socket.py.stdout.on('data', function(data){
 		var r = data.toString();
-		socket.emit('response', r);
+		var o = {
+			context: 'stdout',
+			message: r
+		};
+		socket.emit('response', o);
 		console.log(r);
 	});
 
