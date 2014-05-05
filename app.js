@@ -1,4 +1,5 @@
 var spawn = require('child_process').spawn;
+var _ = require('underscore');
 //var py = require('./src/py');
 //py.write('8 + 2');
 //py.write('8 + 3');
@@ -35,38 +36,111 @@ app.get('/', function(request, response){
 	response.render('index', {title: 'Zebra Donkey Goat'});
 });
 
+
 io.sockets.on('connection', function (socket) {
-	socket.py = spawn('python', ['-i'], { });
 
+	socket.py = false;
+	socket.on('disconnect', function(){
+		if (socket.py){
+			socket.py.kill();
+		}
 
-	socket.py.on('close', function (code) {
-		console.log('python exited with code ' + code);
 	});
 
+	//set up the queue...
+	socket.py_queue = [];
+	socket.py_command_running = true;
+
+	socket.py_queue.push({
+		command: '',
+		request_context: 'start',
+		response: [],
+		response_context: 'start'
+	});
+
+
+	var queue_command = function(command){
+		socket.py_queue.push({
+			command: command,
+			request_context: 'command',
+			response: [],
+			response_context: null
+		});
+		do_next_command();
+	};
+	var do_next_command = function(){
+		if (socket.py_command_running) return;
+		if (0 === socket.py_queue.length){
+			socket.py_command_running = false;
+			return;
+		}
+		var curr = socket.py_queue[0];
+		socket.py_command_running = true;
+		socket.py.stdin.write(curr.command + '\n', 'utf8', function(){});
+	};
+
+	var handle_response = function(data, context){
+		var done = false;
+		var curr = socket.py_queue[0];
+		var lines = data.split('\n');
+
+		_.each(lines, function(value){
+			value = value.trim();
+			if ('>>>' === value){
+				if (! curr.response_context){
+					curr.response_context = 'stdout';
+				}
+				//then we're done with the response
+				//we don't want '>>>' to be included in the response
+				done = true;
+
+			} else {
+				if (! curr.response_context){
+					curr.response_context = context;
+				}
+				curr.response.push(value);
+			}
+		});
+		if (done){
+			//get rid of the first element in the queue
+			//we already have it in curr
+			socket.py_queue.shift();
+			socket.emit('response', curr);
+			socket.py_command_running = false;
+			do_next_command();
+		} else {
+			socket.py_command_running = true;
+			//make sure we save the changes...
+			socket.py_queue[0] = curr;
+		}
+	};
+
+	//spawn a python process...
+	socket.py = spawn('python', ['-i'], { });
+
 	socket.py.stderr.on('data', function (data) {
-		var r = data.toString();
-		var o = {
-			context: 'stderr',
-			message: r
-		};
-		socket.emit('response', o);
-		console.log(r);
+		console.log('stderr');
+		console.log(data.toString());
+		handle_response(data.toString(), 'stderr');
 	});
 
 	socket.py.stdout.on('data', function(data){
-		var r = data.toString();
-		var o = {
-			context: 'stdout',
-			message: r
-		};
-		socket.emit('response', o);
-		console.log(r);
+		console.log('stdout');
+		console.log(data.toString());
+		handle_response(data.toString(), 'stdout');
 	});
 
 	socket.on('command', function (data) {
-		console.log(data.command);
-		socket.py.stdin.write(data.command + '\n', 'utf8', function(){});
+		queue_command(data.command);
+
 	});
+
+	socket.py.on('close', function (code) {
+
+		console.log('python exited with code ' + code);
+	});
+
+
 
 });
 
@@ -91,7 +165,7 @@ app.use(function(req, res, next) {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-	app.use(function(err, req, res, next) {
+	app.use(function(err, req, res) {
 		res.status(err.status || 500);
 		res.render('error', {
 			message: err.message,
@@ -102,7 +176,7 @@ if (app.get('env') === 'development') {
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function(err, req, res, next) {
+app.use(function(err, req, res) {
 	res.status(err.status || 500);
 	res.render('error', {
 		message: err.message,

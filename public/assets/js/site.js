@@ -7,13 +7,12 @@ $(document).ready(function(){
 	var command_line_queue = [];
 	var command_line_queue_ind = 0;
 
-	var get_el_html = function(type, context){
-		context = context ? ' ' + context : '';
+	var get_el_html = function(){
 		el_count++;
 		var id = 'el-' + el_count;
 		var html =
-			'<div class="' + type + context + ' inserted line" id="' + id + '">' +
-				$('.templates .' + type).html() +
+			'<div class="command item inserted" id="' + id + '">' +
+				$('.templates .command').html() +
 			'</div>';
 		return {
 			id: id,
@@ -27,15 +26,16 @@ $(document).ready(function(){
 		command_line_queue.unshift(cmd);
 		command_line_queue_ind = -1;
 		commandline_inp.val('');
-		$('.templates').append(commandline);
-		el_data = get_el_html('input');
-		queue.append(el_data.html);
+
+		el_data = get_el_html('');
+		commandline.before(el_data.html);
 		el = $('#' + el_data.id);
-		$('.data', el).text(cmd);
+		$('.input .data', el).text(cmd);
+		$('.output .wait', el).show();
+		$('.output .data', el).hide();
 		$('.inserted', queue).slideDown('fast', function(){
 			$('.inserted', queue).removeClass('inserted');
 			socket.emit('command', {command: cmd});
-			queue.append(commandline);
 		});
 	};
 
@@ -64,41 +64,23 @@ $(document).ready(function(){
 				break;
 
 		}
-		if (13 === event.keyCode){
 
-		} else {
-
-		}
 	});
 
 	socket.on('response', function (data) {
 		console.log(data);
-		$('.templates').append(commandline);
-		var lines = data.message.trim().split('\n');
-		_.each(lines, function(value){
-
-			var el, el_data;
-			value = value.trim();
-			if ('>>>' === value){
-
-			} else {
-				el_data = get_el_html('output', data.context);
-				queue.append(el_data.html);
-				el = $('#' + el_data.id);
-				$('.data', el).text(value);
-
-
-			}
-
-
+		var el = $('.command:last', queue);
+		var out = $('.output .data', el);
+		var icon = $('.input .prompt i', el);
+		el.addClass(data.response_context);
+		_.each(data.response, function(val){
+			out.append('<div>' + val + '</div>');
 		});
-		$('.inserted', queue).slideDown('fast', function(){
-			$('.inserted', queue).removeClass('inserted');
+		out.slideDown('fast', function(){
+			icon.removeClass('fa-refresh fa-spin');
+			icon.addClass('fa-chevron-right');
+			commandline_inp.focus();
 		});
-		queue.append(commandline);
-		commandline_inp.focus();
-
-
 	});
 
 });

@@ -19,18 +19,18 @@ body {
 #commandline input:focus {
   background-color: #EEE;
 }
-#queue .line {
+#queue .item {
   position: relative;
   margin: 6px 0;
 }
-#queue .line.stderr {
+#queue .item.stderr .output {
   background-color: #ffff00;
 }
-#queue .line .prompt {
+#queue .item .prompt {
   position: absolute;
   top: 0;
   left: 0;
-  z-index: -1;
+  z-index: 1;
 }
 #queue .data {
   padding-left: 24px;

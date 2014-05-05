@@ -2,21 +2,29 @@ extends layout
 block content
     div.container-fluid
         div#queue
-        div.input.line#commandline
-            div.prompt
-                i.fa.fa-chevron-right
-            div.data
-                input.form-control(placeholder="Type a command")
+            div.item.command
+                div.input
+                    div.prompt
+                        i.fa.fa-refresh.fa-spin
+                    div.data
+                div.output
+                    div.data Starting python...
+            div#commandline.item
+                div.input
+                    div.prompt
+                        i.fa.fa-chevron-right
+                    div.data
+                        input.form-control(placeholder="Type a command")
 
     div.templates
-        div.output
-            div.data
-        div.input
-            div.prompt
-                i.fa.fa-chevron-right
-            div.data
-        div.wait
-            i.fa.fa-refresh.fa-spin
+        div.item.command
+            div.input
+                div.prompt
+                    i.fa.fa-refresh.fa-spin
+                div.data
+            div.output
+                div.data
+
 
 
 
