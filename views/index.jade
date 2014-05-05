@@ -2,17 +2,20 @@ extends layout
 block content
     div.container-fluid
         div#queue
-        div#commandline
-            input.form-control(placeholder="Type a command")
-
-    div.templates
-        li.output
-            div.data
-        li.input
+        div.input.line#commandline
             div.prompt
                 i.fa.fa-chevron-right
             div.data
-        li.wait
+                input.form-control(placeholder="Type a command")
+
+    div.templates
+        div.output
+            div.data
+        div.input
+            div.prompt
+                i.fa.fa-chevron-right
+            div.data
+        div.wait
             i.fa.fa-refresh.fa-spin
 
 

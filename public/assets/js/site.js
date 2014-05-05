@@ -22,18 +22,15 @@ $(document).ready(function(){
 		var el, el_data;
 		var cmd = commandline_inp.val().trim();
 		commandline_inp.val('');
-		var row = commandline.parents('.input');
 		$('.templates').append(commandline);
-		row.slideUp('fast', function(){
-			row.remove();
-			el_data = get_el_html('input');
-			queue.append(el_data.html);
-			el = $('#' + el_data.id);
-			$('.data', el).text(cmd);
-			$('.inserted', queue).slideDown('fast', function(){
-				$('.inserted', queue).removeClass('inserted');
-				socket.emit('command', {command: cmd});
-			});
+		el_data = get_el_html('input');
+		queue.append(el_data.html);
+		el = $('#' + el_data.id);
+		$('.data', el).text(cmd);
+		$('.inserted', queue).slideDown('fast', function(){
+			$('.inserted', queue).removeClass('inserted');
+			socket.emit('command', {command: cmd});
+			queue.append(commandline);
 		});
 	};
 
@@ -46,28 +43,30 @@ $(document).ready(function(){
 
 	socket.on('response', function (data) {
 		console.log(data);
+		$('.templates').append(commandline);
 		var lines = data.trim().split('\n');
 		_.each(lines, function(value){
-			var type = 'output';
+
 			var el, el_data;
 			value = value.trim();
 			if ('>>>' === value){
-				type = 'input';
-			}
-			el_data = get_el_html(type);
-			queue.append(el_data.html);
-			el = $('#' + el_data.id);
-			if ('input' == type){
-				$('.data', el).append(commandline);
+
 			} else {
+				el_data = get_el_html('output');
+				queue.append(el_data.html);
+				el = $('#' + el_data.id);
 				$('.data', el).text(value);
+
+
 			}
-			$('.inserted', queue).slideDown('fast', function(){
-				commandline_inp.focus();
-				$('.inserted', queue).removeClass('inserted');
-			});
+
 
 		});
+		$('.inserted', queue).slideDown('fast', function(){
+			$('.inserted', queue).removeClass('inserted');
+		});
+		queue.append(commandline);
+		commandline_inp.focus();
 
 
 	});
